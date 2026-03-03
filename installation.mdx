@@ -1,0 +1,90 @@
+---
+title: Installation
+description: Add the Animated Profile Slider widget to your Flutter project
+---
+
+# Installation
+
+Follow these steps to add the Animated Profile Slider to your Flutter project.
+
+## Requirements
+
+Before you begin, ensure you have:
+
+- **Flutter SDK**: Version 3.7.0 or higher
+- **Dart SDK**: Included with Flutter SDK ^3.7.0
+- A Flutter project initialized and ready
+
+## Dependencies
+
+The widget requires only standard Flutter dependencies:
+
+```yaml pubspec.yaml
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+```
+
+These dependencies are included in every Flutter project by default, so no additional packages need to be installed.
+
+## Installation steps
+
+<Steps>
+  <Step title="Create the widget file">
+    In your Flutter project, create a new file for the carousel widget:
+
+    ```bash
+    touch lib/animated_slider.dart
+    ```
+
+    Or create it in your preferred location within the `lib` directory.
+  </Step>
+
+  <Step title="Copy the widget code">
+    Copy the complete widget implementation from the source repository into your new file. The implementation includes:
+
+    - `SliceAnimatedList` - The main stateful carousel widget
+    - `_SliceAnimatedListState` - State management with animation controllers
+    - Helper methods for item scaling, positioning, and navigation
+
+    The widget is self-contained and requires no external dependencies beyond Flutter's core libraries.
+  </Step>
+
+  <Step title="Import required Flutter packages">
+    Ensure your widget file includes these imports at the top:
+
+    ```dart
+    import 'package:flutter/material.dart';
+    import 'package:flutter/services.dart';
+    ```
+
+    The `material.dart` package provides the UI components, while `services.dart` enables device orientation control.
+  </Step>
+
+  <Step title="Verify your environment">
+    Check that your Flutter SDK meets the minimum version requirement:
+
+    ```bash
+    flutter --version
+    ```
+
+    You should see version 3.7.0 or higher.
+  </Step>
+
+  <Step title="Run flutter pub get">
+    Although no new dependencies are required, it's good practice to ensure all packages are up to date:
+
+    ```bash
+    flutter pub get
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+The widget uses `TickerProviderStateMixin` for animation controllers, which is already included in Flutter's animation framework. No additional animation packages are needed.
+</Tip>
+
+## Next steps
+
+Now that you've installed the widget, proceed to the [Quick start guide](/quickstart) to learn how to integrate it into your app.

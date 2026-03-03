@@ -1,0 +1,43 @@
+---
+title: Animated Profile Slider
+description: A Flutter carousel widget with smooth animations and scale-based item selection
+---
+
+# Animated Profile Slider
+
+The Animated Profile Slider is a horizontal carousel widget for Flutter that displays items in an elegant, interactive layout with smooth animations. The selected item scales up and centers while other items scale down based on their distance from center.
+
+## Key features
+
+The widget provides a polished user experience with these core capabilities:
+
+- **Horizontal carousel layout** - Items are arranged horizontally with the selected item centered on screen
+- **Scale-based visual hierarchy** - Selected items scale to 1.0x while items further away scale down to 0.3x minimum, with 0.2x reduction per item distance
+- **Dual navigation modes** - Users can tap any item directly or use the pulsing navigation buttons
+- **Smooth animations** - All transitions use 300ms duration with easeInOut curves for natural motion
+- **Pulsing navigation buttons** - Arrow buttons animate with a 1.5 second pulse (1.0x to 1.3x scale) to guide user interaction
+- **Landscape optimized** - Forces landscape orientation for optimal carousel display
+
+<CardGroup cols={3}>
+  <Card title="Quick start" icon="rocket" href="/quickstart">
+    Get the carousel running in your Flutter app
+  </Card>
+  <Card title="Animated slider component" icon="sliders" href="/components/animated-slider">
+    Explore the SliceAnimatedList widget architecture
+  </Card>
+  <Card title="Animation customization" icon="wand-magic-sparkles" href="/customization/animations">
+    Customize timing, curves, and scale factors
+  </Card>
+</CardGroup>
+
+## How it works
+
+The widget uses Flutter's `AnimatedPositioned` and `AnimatedScale` widgets to create smooth transitions. When you select an item:
+
+1. The selected item moves to the center of the screen
+2. Its scale animates to 1.0x (full size)
+3. Other items reposition themselves with spacing of 180.0 logical pixels
+4. Each item's scale is calculated based on its distance from the selected index
+5. Navigation buttons appear/disappear based on whether you're at the start or end
+
+The carousel maintains a list of items and tracks the currently selected index. All animations are driven by state changes, making the widget fully declarative and easy to integrate into any Flutter application.

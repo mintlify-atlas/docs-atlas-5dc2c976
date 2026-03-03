@@ -1,0 +1,353 @@
+---
+title: Navigation buttons
+description: Learn about the navigation button component with pulse animations and conditional rendering
+---
+
+## Overview
+
+Navigation buttons provide left/right controls for the carousel. They feature a pulsing animation to draw user attention and conditionally appear based on whether navigation in that direction is possible.
+
+## Button structure
+
+The `_buildNavigationButton` method creates an animated button:
+
+```dart
+Widget _buildNavigationButton({
+  required IconData icon,
+  required VoidCallback onPressed,
+  required bool isLeft,
+}) {
+  return AnimatedBuilder(
+    animation: _buttonAnimationController,
+    builder: (context, child) {
+      return Transform.scale(
+        scale: _buttonAnimation.value,
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.black54,
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: Icon(icon, color: Colors.white),
+            onPressed: onPressed,
+            iconSize: 30,
+          ),
+        ),
+      );
+    },
+  );
+}
+```
+
+### Method parameters
+
+<ParamField path="icon" type="IconData" required>
+  The icon to display (typically `Icons.arrow_back_ios` or `Icons.arrow_forward_ios`)
+</ParamField>
+
+<ParamField path="onPressed" type="VoidCallback" required>
+  The callback function executed when the button is pressed
+</ParamField>
+
+<ParamField path="isLeft" type="bool" required>
+  Indicates whether this is a left navigation button (currently unused but available for directional styling)
+</ParamField>
+
+## Pulse animation implementation
+
+The pulsing effect uses an `AnimationController` and `Animation<double>`:
+
+### Animation controller setup
+
+```dart
+void _initializeButtonAnimation() {
+  _buttonAnimationController = AnimationController(
+    vsync: this,
+    duration: _buttonPulseDuration,
+  )..repeat(reverse: true);
+
+  _buttonAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
+    CurvedAnimation(
+      parent: _buttonAnimationController,
+      curve: Curves.easeInOut,
+    ),
+  );
+}
+```
+
+### Animation breakdown
+
+<Accordion title="AnimationController">
+  Creates a controller with 1500ms duration that repeats infinitely, reversing direction each time:
+  ```dart
+  _buttonAnimationController = AnimationController(
+    vsync: this,
+    duration: _buttonPulseDuration, // 1500ms
+  )..repeat(reverse: true);
+  ```
+</Accordion>
+
+<Accordion title="Tween animation">
+  Defines the scale range from 1.0 (normal size) to 1.3 (30% larger):
+  ```dart
+  _buttonAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
+    CurvedAnimation(
+      parent: _buttonAnimationController,
+      curve: Curves.easeInOut,
+    ),
+  );
+  ```
+</Accordion>
+
+<Accordion title="CurvedAnimation">
+  Applies `Curves.easeInOut` for smooth acceleration and deceleration, making the pulse feel organic rather than mechanical.
+</Accordion>
+
+<Info>
+The `repeat(reverse: true)` method creates a continuous ping-pong effect: the button grows to 1.3x, then shrinks back to 1.0x, then grows again.
+</Info>
+
+## AnimatedBuilder pattern
+
+The button uses `AnimatedBuilder` for efficient animation rebuilds:
+
+```dart
+AnimatedBuilder(
+  animation: _buttonAnimationController,
+  builder: (context, child) {
+    return Transform.scale(
+      scale: _buttonAnimation.value,
+      child: Container(
+        // Button content
+      ),
+    );
+  },
+)
+```
+
+<Tip>
+`AnimatedBuilder` only rebuilds the widget tree inside the `builder` function, making it more efficient than calling `setState()` on every animation frame.
+</Tip>
+
+## Button styling
+
+Buttons have a circular dark background with white icons:
+
+```dart
+Container(
+  decoration: const BoxDecoration(
+    color: Colors.black54,
+    shape: BoxShape.circle,
+  ),
+  child: IconButton(
+    icon: Icon(icon, color: Colors.white),
+    onPressed: onPressed,
+    iconSize: 30,
+  ),
+)
+```
+
+### Visual properties
+
+<ParamField path="Background color" type="Colors.black54">
+  Semi-transparent black (54% opacity) provides contrast without blocking carousel items
+</ParamField>
+
+<ParamField path="Shape" type="BoxShape.circle">
+  Creates a circular button container
+</ParamField>
+
+<ParamField path="Icon color" type="Colors.white">
+  White icons for clear visibility against the dark background
+</ParamField>
+
+<ParamField path="Icon size" type="30">
+  Larger icon size for better touch targets and visibility
+</ParamField>
+
+## Navigation logic
+
+Two methods handle left and right navigation:
+
+### Previous item navigation
+
+```dart
+void _selectPreviousItem() {
+  if (_selectedIndex > 0) {
+    _selectItem(_selectedIndex - 1);
+  }
+}
+```
+
+Moves to the previous item only if not already at the first item (index 0).
+
+### Next item navigation
+
+```dart
+void _selectNextItem() {
+  if (_selectedIndex < _items.length - 1) {
+    _selectItem(_selectedIndex + 1);
+  }
+}
+```
+
+Moves to the next item only if not already at the last item.
+
+<Warning>
+The bounds checking (`_selectedIndex > 0` and `_selectedIndex < _items.length - 1`) is crucial to prevent out-of-bounds errors.
+</Warning>
+
+## Conditional rendering
+
+Buttons only appear when navigation in their direction is possible:
+
+### Left button condition
+
+```dart
+if (_selectedIndex > 0)
+  Positioned(
+    left: 20,
+    child: _buildNavigationButton(
+      icon: Icons.arrow_back_ios,
+      onPressed: _selectPreviousItem,
+      isLeft: true,
+    ),
+  ),
+```
+
+The left button appears only when there are items to the left (not at index 0).
+
+### Right button condition
+
+```dart
+if (_selectedIndex < _items.length - 1)
+  Positioned(
+    right: 20,
+    child: _buildNavigationButton(
+      icon: Icons.arrow_forward_ios,
+      onPressed: _selectNextItem,
+      isLeft: false,
+    ),
+  ),
+```
+
+The right button appears only when there are items to the right (not at the last index).
+
+<Info>
+Conditional rendering provides a clear visual indicator of navigation boundaries - when you can't go further, the button disappears.
+</Info>
+
+## Button positioning
+
+Buttons are positioned with fixed offsets from screen edges:
+
+```dart
+// Left button
+Positioned(
+  left: 20,
+  child: _buildNavigationButton(/* ... */),
+)
+
+// Right button
+Positioned(
+  right: 20,
+  child: _buildNavigationButton(/* ... */),
+)
+```
+
+The 20-pixel offset from edges provides comfortable spacing without overlapping carousel content.
+
+## Button integration
+
+Buttons are rendered in the main Stack alongside carousel items:
+
+```dart
+Stack(
+  alignment: Alignment.center,
+  children: [
+    // All carousel items
+    ...List.generate(
+      _items.length,
+      (index) => _buildCarouselItem(context, index),
+    ),
+
+    // Left navigation button
+    if (_selectedIndex > 0)
+      Positioned(
+        left: 20,
+        child: _buildNavigationButton(
+          icon: Icons.arrow_back_ios,
+          onPressed: _selectPreviousItem,
+          isLeft: true,
+        ),
+      ),
+
+    // Right navigation button
+    if (_selectedIndex < _items.length - 1)
+      Positioned(
+        right: 20,
+        child: _buildNavigationButton(
+          icon: Icons.arrow_forward_ios,
+          onPressed: _selectNextItem,
+          isLeft: false,
+        ),
+      ),
+  ],
+)
+```
+
+<Tip>
+Buttons are added after carousel items in the Stack, ensuring they render on top and remain clickable.
+</Tip>
+
+## Animation lifecycle
+
+The button animation controller must be properly managed:
+
+### Initialization
+
+Called in `initState()`:
+
+```dart
+@override
+void initState() {
+  super.initState();
+  _populateInitialItems();
+  _initializeButtonAnimation();
+}
+```
+
+### Disposal
+
+Called in `dispose()`:
+
+```dart
+@override
+void dispose() {
+  _buttonAnimationController.dispose();
+  super.dispose();
+}
+```
+
+<Warning>
+Failing to dispose of animation controllers causes memory leaks. Always call `dispose()` in the widget's `dispose()` method.
+</Warning>
+
+## User experience benefits
+
+The navigation button design provides several UX advantages:
+
+1. **Visual feedback**: Pulse animation draws attention to available navigation
+2. **Clear affordance**: Circular buttons with arrows are universally understood
+3. **Boundary indication**: Buttons disappear at list ends, preventing confusion
+4. **Touch-friendly**: 30px icons with circular containers provide adequate tap targets
+5. **Non-intrusive**: Semi-transparent background doesn't obscure content
+
+## Customization possibilities
+
+The `isLeft` parameter is currently unused but enables future enhancements:
+
+- Different icons or styling for left vs. right
+- Directional animation effects
+- Asymmetric positioning or sizing
+- Conditional behavior based on direction

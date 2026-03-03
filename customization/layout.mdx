@@ -1,0 +1,426 @@
+---
+title: Layout customization
+description: Customize spacing, sizing, and positioning of the Animated Profile Slider
+---
+
+The Animated Profile Slider's layout is controlled by several constants that define item sizing, spacing, and scale behavior. This guide covers all layout customization options.
+
+## Layout constants
+
+The widget defines five key constants that control the carousel layout:
+
+```dart main.dart:53-57
+static const double _itemWidth = 150.0;
+static const double _itemSpacing = 180.0;
+static const double _maxScale = 1.0;
+static const double _minScale = 0.3;
+static const double _scaleFactor = 0.2;
+```
+
+### Item width
+
+<ParamField path="_itemWidth" type="double" default="150.0">
+  The width of each carousel card in logical pixels. This determines the base size of each item before scaling is applied.
+</ParamField>
+
+```dart main.dart:53
+static const double _itemWidth = 150.0;
+```
+
+The item width is used when building each card:
+
+```dart main.dart:137-144
+Widget _buildCardItem(
+  BuildContext context,
+  int item,
+  TextStyle? textStyle,
+  double scale,
+) {
+  return SizedBox(
+    width: _itemWidth,  // Fixed width for each card
+    child: Card(...),
+  );
+}
+```
+
+<Tip>
+For larger items, increase `_itemWidth` and adjust `_itemSpacing` proportionally to prevent overlap.
+</Tip>
+
+### Item spacing
+
+<ParamField path="_itemSpacing" type="double" default="180.0">
+  The distance between adjacent items in logical pixels. This controls how spread out items appear in the carousel.
+</ParamField>
+
+```dart main.dart:54
+static const double _itemSpacing = 180.0;
+```
+
+Spacing is used to calculate item positions:
+
+```dart main.dart:158
+final double offsetX = (index - _selectedIndex) * _itemSpacing;
+```
+
+<Info>
+The `_itemSpacing` should be larger than `_itemWidth` to prevent items from overlapping. A good rule of thumb is spacing = width + 30.
+</Info>
+
+### Maximum scale
+
+<ParamField path="_maxScale" type="double" default="1.0">
+  The scale factor for the selected (centered) item. A value of 1.0 means full size, while values > 1.0 would make the selected item larger than its base size.
+</ParamField>
+
+```dart main.dart:55
+static const double _maxScale = 1.0;
+```
+
+This represents the scale of the currently selected item. To make the selected item appear larger:
+
+```dart
+static const double _maxScale = 1.2;  // 20% larger when selected
+```
+
+### Minimum scale
+
+<ParamField path="_minScale" type="double" default="0.3">
+  The minimum scale factor for items far from the center. Items will never scale smaller than this value, regardless of distance.
+</ParamField>
+
+```dart main.dart:56
+static const double _minScale = 0.3;
+```
+
+This creates the depth effect where distant items appear smaller. The value is clamped in the scale calculation:
+
+```dart main.dart:147-153
+double _calculateItemScale(int index) {
+  final int distanceFromCenter = (index - _selectedIndex).abs();
+  return (_maxScale - (distanceFromCenter * _scaleFactor)).clamp(
+    _minScale,  // Items won't scale below this
+    _maxScale,
+  );
+}
+```
+
+<Warning>
+Setting `_minScale` too small (< 0.2) may make distant items difficult to see or tap.
+</Warning>
+
+### Scale factor
+
+<ParamField path="_scaleFactor" type="double" default="0.2">
+  The amount of scale reduction per item distance from center. Higher values create more dramatic size differences between near and far items.
+</ParamField>
+
+```dart main.dart:57
+static const double _scaleFactor = 0.2;
+```
+
+This controls how quickly items shrink as they move away from center:
+
+- Scale factor 0.2: Each item away is 0.2 smaller (1.0 → 0.8 → 0.6 → 0.4 → 0.3...)
+- Scale factor 0.1: Each item away is 0.1 smaller (1.0 → 0.9 → 0.8 → 0.7...)
+- Scale factor 0.3: Each item away is 0.3 smaller (1.0 → 0.7 → 0.4 → 0.3...)
+
+<Tabs>
+  <Tab title="Subtle depth">
+    ```dart
+    static const double _scaleFactor = 0.1;
+    static const double _minScale = 0.5;
+    ```
+    Creates a subtle size difference for a flatter appearance.
+  </Tab>
+  
+  <Tab title="Dramatic depth">
+    ```dart
+    static const double _scaleFactor = 0.3;
+    static const double _minScale = 0.2;
+    ```
+    Creates dramatic size differences for strong 3D perspective.
+  </Tab>
+  
+  <Tab title="No depth">
+    ```dart
+    static const double _scaleFactor = 0.0;
+    static const double _minScale = 1.0;
+    static const double _maxScale = 1.0;
+    ```
+    All items remain the same size (flat carousel).
+  </Tab>
+</Tabs>
+
+## Positioning calculations
+
+Item positions are calculated relative to the screen center:
+
+```dart main.dart:158,166
+final double offsetX = (index - _selectedIndex) * _itemSpacing;
+left: MediaQuery.of(context).size.width / 2 - _itemWidth / 2 + offsetX,
+```
+
+### Understanding the positioning formula
+
+The formula breaks down as follows:
+
+1. **`MediaQuery.of(context).size.width / 2`** - Center of the screen
+2. **`- _itemWidth / 2`** - Shift left by half the item width to center the item
+3. **`+ offsetX`** - Add the offset based on distance from selected item
+
+Where `offsetX = (index - _selectedIndex) * _itemSpacing`:
+- Selected item (index == _selectedIndex): offsetX = 0
+- One item to the right: offsetX = _itemSpacing
+- One item to the left: offsetX = -_itemSpacing
+
+### Adjusting item positions
+
+To customize positioning:
+
+**Vertical position:**
+
+```dart
+SizedBox(
+  height: 200.0,  // Increase carousel height
+  width: MediaQuery.of(context).size.width,
+  child: Stack(
+    alignment: Alignment.center,  // Change to Alignment.topCenter or bottomCenter
+    children: [...],
+  ),
+)
+```
+
+**Horizontal offset:**
+
+```dart
+// Shift entire carousel to the right
+left: MediaQuery.of(context).size.width / 2 - _itemWidth / 2 + offsetX + 50,
+
+// Shift entire carousel to the left
+left: MediaQuery.of(context).size.width / 2 - _itemWidth / 2 + offsetX - 50,
+```
+
+## Screen orientation
+
+The widget enforces landscape orientation for optimal carousel display:
+
+```dart main.dart:6-14
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Force landscape orientation for better carousel display
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]).then((_) {
+    runApp(const MyApp());
+  });
+}
+```
+
+### Supporting portrait mode
+
+To enable portrait mode, remove or modify the orientation lock:
+
+```dart
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Allow all orientations
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]).then((_) {
+    runApp(const MyApp());
+  });
+}
+```
+
+<Warning>
+In portrait mode, you may need to reduce `_itemSpacing` to fit items within the narrower screen width.
+</Warning>
+
+### Portrait-specific adjustments
+
+For responsive layouts that work in both orientations:
+
+```dart
+Widget build(BuildContext context) {
+  final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+  final itemSpacing = isLandscape ? 180.0 : 120.0;
+  final itemWidth = isLandscape ? 150.0 : 100.0;
+  
+  // Use dynamic values instead of constants
+}
+```
+
+## Responsive sizing
+
+The widget uses `MediaQuery` to adapt to different screen sizes:
+
+```dart main.dart:166,210-211
+left: MediaQuery.of(context).size.width / 2 - _itemWidth / 2 + offsetX,
+
+SizedBox(
+  height: 150.0,
+  width: MediaQuery.of(context).size.width,  // Full screen width
+  child: Stack(...),
+)
+```
+
+### Creating responsive layouts
+
+To make item sizes responsive to screen size:
+
+```dart
+class _SliceAnimatedListState extends State<SliceAnimatedList>
+    with TickerProviderStateMixin {
+  // Convert constants to getters that calculate based on screen size
+  double get _itemWidth {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return screenWidth * 0.15;  // 15% of screen width
+  }
+  
+  double get _itemSpacing {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return screenWidth * 0.18;  // 18% of screen width
+  }
+  
+  // Keep scale constants as they are relative values
+  static const double _maxScale = 1.0;
+  static const double _minScale = 0.3;
+  static const double _scaleFactor = 0.2;
+  
+  // ... rest of the class
+}
+```
+
+<Note>
+When using dynamic sizing, you may need to convert constants to getters or calculate values within the build method.
+</Note>
+
+## Adjusting spacing, sizing, and scale
+
+Here are common layout customization scenarios:
+
+<Tabs>
+  <Tab title="Compact layout">
+    ```dart
+    static const double _itemWidth = 100.0;      // Smaller items
+    static const double _itemSpacing = 120.0;     // Closer together
+    static const double _maxScale = 1.0;
+    static const double _minScale = 0.4;          // Less dramatic sizing
+    static const double _scaleFactor = 0.15;
+    ```
+    Fits more items on screen with subtle depth.
+  </Tab>
+  
+  <Tab title="Spacious layout">
+    ```dart
+    static const double _itemWidth = 200.0;      // Larger items
+    static const double _itemSpacing = 250.0;     // More space between
+    static const double _maxScale = 1.2;          // Selected item larger
+    static const double _minScale = 0.2;          // Very small distant items
+    static const double _scaleFactor = 0.25;
+    ```
+    Creates a grand, spacious carousel with strong focus on selected item.
+  </Tab>
+  
+  <Tab title="Flat carousel">
+    ```dart
+    static const double _itemWidth = 150.0;
+    static const double _itemSpacing = 170.0;     // Slight spacing
+    static const double _maxScale = 1.0;          // All same size
+    static const double _minScale = 1.0;
+    static const double _scaleFactor = 0.0;       // No scaling
+    ```
+    No depth effect - all items remain the same size.
+  </Tab>
+  
+  <Tab title="Focus on center">
+    ```dart
+    static const double _itemWidth = 180.0;
+    static const double _itemSpacing = 200.0;
+    static const double _maxScale = 1.5;          // Center item 50% larger
+    static const double _minScale = 0.3;
+    static const double _scaleFactor = 0.3;       // Dramatic reduction
+    ```
+    Strong focus on the selected item with dramatic scaling.
+  </Tab>
+</Tabs>
+
+## Container sizing
+
+The carousel is wrapped in a sized container:
+
+```dart main.dart:210-212
+SizedBox(
+  height: 150.0,
+  width: MediaQuery.of(context).size.width,
+```
+
+<ParamField path="height" type="double" default="150.0">
+  The height of the carousel container. Should accommodate the largest scaled item plus padding.
+</ParamField>
+
+<ParamField path="width" type="double" default="MediaQuery.of(context).size.width">
+  The width of the carousel container. Defaults to full screen width.
+</ParamField>
+
+### Calculating required height
+
+To ensure items fit without clipping:
+
+```dart
+final itemHeight = 120.0;  // Your card height
+final containerHeight = itemHeight * _maxScale + 20;  // Add 20px padding
+
+SizedBox(
+  height: containerHeight,
+  width: MediaQuery.of(context).size.width,
+  child: Stack(...),
+)
+```
+
+<Info>
+Card height is determined by its content. The widget uses `Card` with auto-sizing based on child content.
+</Info>
+
+## Complete layout example
+
+Here's a complete example with custom layout settings:
+
+```dart
+class _SliceAnimatedListState extends State<SliceAnimatedList>
+    with TickerProviderStateMixin {
+  // Custom layout constants
+  static const double _itemWidth = 180.0;
+  static const double _itemSpacing = 210.0;
+  static const double _maxScale = 1.3;
+  static const double _minScale = 0.25;
+  static const double _scaleFactor = 0.25;
+  static const Duration _animationDuration = Duration(milliseconds: 300);
+  static const Duration _buttonPulseDuration = Duration(milliseconds: 1500);
+
+  // ... rest of implementation
+}
+```
+
+<Tip>
+Start with small adjustments to constants and test the results. Layout changes can significantly affect the carousel's feel and usability.
+</Tip>
+
+## Testing layout changes
+
+When customizing the layout:
+
+1. **Test with different item counts** - Ensure the layout works with 3, 5, 10, and 20+ items
+2. **Test on different screen sizes** - Verify appearance on phones, tablets, and desktop
+3. **Check for overlap** - Ensure items don't overlap when spacing is too tight
+4. **Verify navigation** - Confirm buttons don't cover items
+5. **Test animations** - Ensure smooth transitions between items
+
+<Warning>
+If `_itemSpacing` is less than `_itemWidth`, items may overlap, especially when scaled. Always maintain spacing > width.
+</Warning>

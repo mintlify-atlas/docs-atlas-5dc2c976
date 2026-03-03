@@ -1,0 +1,253 @@
+---
+title: Styling customization
+description: Customize the visual appearance of the Animated Profile Slider widget
+---
+
+The Animated Profile Slider provides several styling options to match your application's design. This guide covers theme customization, card colors, text styling, and button appearance.
+
+## Theme customization
+
+The widget uses Flutter's `ThemeData` to define the overall appearance. You can customize the primary color scheme and brightness mode.
+
+### Primary color swatch
+
+The `primarySwatch` defines the base color palette for the application:
+
+```dart main.dart:25
+theme: ThemeData(primarySwatch: Colors.blue, brightness: Brightness.dark)
+```
+
+<ParamField path="primarySwatch" type="MaterialColor">
+  The primary color palette for the app. Can be set to any `Colors` constant like `Colors.blue`, `Colors.red`, `Colors.green`, etc.
+</ParamField>
+
+### Brightness mode
+
+The `brightness` property controls the light or dark theme:
+
+```dart main.dart:25
+theme: ThemeData(primarySwatch: Colors.blue, brightness: Brightness.dark)
+```
+
+<ParamField path="brightness" type="Brightness">
+  Controls whether the app uses a light or dark theme. Options are `Brightness.light` or `Brightness.dark`.
+</ParamField>
+
+<Tip>
+Changing the brightness will automatically adjust text colors, background colors, and other UI elements to match the selected theme.
+</Tip>
+
+## Card colors
+
+Each carousel item displays a card with a unique color from Flutter's color primaries:
+
+```dart main.dart:140
+color: Colors.primaries[item % Colors.primaries.length]
+```
+
+The widget cycles through `Colors.primaries`, which includes:
+- Red
+- Pink
+- Purple
+- Deep Purple
+- Indigo
+- Blue
+- Light Blue
+- Cyan
+- Teal
+- Green
+- Light Green
+- Lime
+- Yellow
+- Amber
+- Orange
+- Deep Orange
+- Brown
+- Blue Grey
+
+### Customizing card colors
+
+To use a custom color scheme, modify the `_buildCardItem` method:
+
+```dart
+Widget _buildCardItem(
+  BuildContext context,
+  int item,
+  TextStyle? textStyle,
+  double scale,
+) {
+  // Define your custom color list
+  final customColors = [
+    Color(0xFF6C5CE7),
+    Color(0xFF00B894),
+    Color(0xFFFF7675),
+    Color(0xFFFDCB6E),
+  ];
+  
+  return SizedBox(
+    width: _itemWidth,
+    child: Card(
+      color: customColors[item % customColors.length],
+      child: Center(child: Text('Item $item', style: textStyle)),
+    ),
+  );
+}
+```
+
+## Text styling
+
+The card text uses the theme's headline medium style:
+
+```dart main.dart:160
+TextStyle? textStyle = Theme.of(context).textTheme.headlineMedium;
+```
+
+This ensures consistent typography throughout your application.
+
+### Customizing text appearance
+
+To customize the text style, you can:
+
+**Option 1: Override in the theme**
+
+```dart
+theme: ThemeData(
+  primarySwatch: Colors.blue,
+  brightness: Brightness.dark,
+  textTheme: TextTheme(
+    headlineMedium: TextStyle(
+      fontSize: 24,
+      fontWeight: FontWeight.bold,
+      color: Colors.white,
+      fontFamily: 'YourCustomFont',
+    ),
+  ),
+)
+```
+
+**Option 2: Override directly in the widget**
+
+```dart
+TextStyle? textStyle = Theme.of(context).textTheme.headlineMedium?.copyWith(
+  fontSize: 28,
+  fontWeight: FontWeight.w600,
+  letterSpacing: 1.2,
+);
+```
+
+## Button styling
+
+Navigation buttons use a circular semi-transparent background with white icons:
+
+```dart main.dart:190-199
+Container(
+  decoration: const BoxDecoration(
+    color: Colors.black54,
+    shape: BoxShape.circle,
+  ),
+  child: IconButton(
+    icon: Icon(icon, color: Colors.white),
+    onPressed: onPressed,
+    iconSize: 30,
+  ),
+)
+```
+
+### Customizing button appearance
+
+<Tabs>
+  <Tab title="Background color">
+    Change the `color` property in `BoxDecoration`:
+    
+    ```dart
+    decoration: const BoxDecoration(
+      color: Colors.blue.withOpacity(0.7),  // Custom color with opacity
+      shape: BoxShape.circle,
+    )
+    ```
+  </Tab>
+  
+  <Tab title="Icon color">
+    Modify the `Icon` color property:
+    
+    ```dart
+    icon: Icon(icon, color: Colors.amber)
+    ```
+  </Tab>
+  
+  <Tab title="Icon size">
+    Adjust the `iconSize` property:
+    
+    ```dart
+    IconButton(
+      icon: Icon(icon, color: Colors.white),
+      onPressed: onPressed,
+      iconSize: 40,  // Larger icons
+    )
+    ```
+  </Tab>
+  
+  <Tab title="Button shape">
+    Change from circle to rounded square:
+    
+    ```dart
+    decoration: BoxDecoration(
+      color: Colors.black54,
+      borderRadius: BorderRadius.circular(12),  // Rounded square
+    )
+    ```
+  </Tab>
+</Tabs>
+
+### Button positioning
+
+Buttons are positioned at the edges of the carousel:
+
+```dart main.dart:224-230
+Positioned(
+  left: 20,  // Distance from left edge
+  child: _buildNavigationButton(...),
+)
+
+Positioned(
+  right: 20,  // Distance from right edge
+  child: _buildNavigationButton(...),
+)
+```
+
+<Note>
+Buttons automatically hide when navigation is not available (e.g., left button hides at the first item).
+</Note>
+
+## Complete styling example
+
+Here's a complete example with custom styling:
+
+```dart
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Animated Profile Slider',
+      theme: ThemeData(
+        primarySwatch: Colors.deepPurple,
+        brightness: Brightness.light,
+        textTheme: TextTheme(
+          headlineMedium: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      home: const SimpleAnimatedList(),
+    );
+  }
+}
+```
+
+<Tip>
+Test your styling changes in both light and dark modes to ensure good contrast and readability.
+</Tip>

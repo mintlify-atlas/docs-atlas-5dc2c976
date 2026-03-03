@@ -1,0 +1,256 @@
+---
+title: Carousel item
+description: Learn how individual carousel items are built, scaled, and animated in the SliceAnimatedList widget
+---
+
+## Overview
+
+Carousel items are the individual cards displayed in the horizontal slider. Each item has dynamic positioning and scaling based on its distance from the currently selected item. The implementation uses Flutter's `AnimatedPositioned` and `AnimatedScale` widgets for smooth transitions.
+
+## Building carousel items
+
+The `_buildCarouselItem` method creates each item with position and scale animations:
+
+```dart
+Widget _buildCarouselItem(BuildContext context, int index) {
+  final double scale = _calculateItemScale(index);
+  final double offsetX = (index - _selectedIndex) * _itemSpacing;
+
+  TextStyle? textStyle = Theme.of(context).textTheme.headlineMedium;
+  int item = _items[index];
+
+  return AnimatedPositioned(
+    duration: _animationDuration,
+    curve: Curves.easeInOut,
+    left: MediaQuery.of(context).size.width / 2 - _itemWidth / 2 + offsetX,
+    child: GestureDetector(
+      onTap: () => _selectItem(index),
+      child: AnimatedScale(
+        scale: scale,
+        duration: _animationDuration,
+        curve: Curves.easeInOut,
+        child: _buildCardItem(context, item, textStyle, scale),
+      ),
+    ),
+  );
+}
+```
+
+### Method parameters
+
+<ParamField path="context" type="BuildContext">
+  The build context for accessing theme and screen dimensions
+</ParamField>
+
+<ParamField path="index" type="int">
+  The position of this item in the `_items` list
+</ParamField>
+
+## Positioning logic
+
+Items are positioned using a center-based calculation:
+
+```dart
+final double offsetX = (index - _selectedIndex) * _itemSpacing;
+```
+
+### How it works
+
+1. Calculate distance from selected item: `index - _selectedIndex`
+2. Multiply by spacing constant (`180.0`) to get offset from center
+3. Add to screen center position to get absolute left coordinate
+
+<Accordion title="Position calculation example">
+  If `_selectedIndex = 2` and `_itemSpacing = 180.0`:
+  - Item 0: `(0 - 2) * 180 = -360` (360px left of center)
+  - Item 1: `(1 - 2) * 180 = -180` (180px left of center)
+  - Item 2: `(2 - 2) * 180 = 0` (at center)
+  - Item 3: `(3 - 2) * 180 = 180` (180px right of center)
+  - Item 4: `(4 - 2) * 180 = 360` (360px right of center)
+</Accordion>
+
+### AnimatedPositioned widget
+
+The `AnimatedPositioned` widget smoothly transitions the item to its new position:
+
+```dart
+AnimatedPositioned(
+  duration: _animationDuration,
+  curve: Curves.easeInOut,
+  left: MediaQuery.of(context).size.width / 2 - _itemWidth / 2 + offsetX,
+  // ...
+)
+```
+
+<Info>
+The `left` property is calculated as: screen center - half item width + offset. This ensures the selected item is perfectly centered.
+</Info>
+
+## Scaling logic
+
+Items scale down based on their distance from the selected item using the `_calculateItemScale` method:
+
+```dart
+double _calculateItemScale(int index) {
+  final int distanceFromCenter = (index - _selectedIndex).abs();
+  return (_maxScale - (distanceFromCenter * _scaleFactor)).clamp(
+    _minScale,
+    _maxScale,
+  );
+}
+```
+
+### Scale calculation breakdown
+
+1. **Calculate absolute distance**: `(index - _selectedIndex).abs()`
+2. **Compute raw scale**: `_maxScale - (distanceFromCenter * _scaleFactor)`
+3. **Clamp to valid range**: Keep between `_minScale` (0.3) and `_maxScale` (1.0)
+
+<Accordion title="Scale calculation example">
+  With constants `_maxScale = 1.0`, `_minScale = 0.3`, `_scaleFactor = 0.2`:
+  
+  - Distance 0 (selected): `1.0 - (0 * 0.2) = 1.0` → **100% size**
+  - Distance 1: `1.0 - (1 * 0.2) = 0.8` → **80% size**
+  - Distance 2: `1.0 - (2 * 0.2) = 0.6` → **60% size**
+  - Distance 3: `1.0 - (3 * 0.2) = 0.4` → **40% size**
+  - Distance 4+: `1.0 - (4 * 0.2) = 0.2` → clamped to **30% size**
+</Accordion>
+
+### AnimatedScale widget
+
+The `AnimatedScale` widget applies smooth scale transitions:
+
+```dart
+AnimatedScale(
+  scale: scale,
+  duration: _animationDuration,
+  curve: Curves.easeInOut,
+  child: _buildCardItem(context, item, textStyle, scale),
+)
+```
+
+<Tip>
+Both `AnimatedPositioned` and `AnimatedScale` use `Curves.easeInOut` for natural-feeling motion that accelerates and decelerates smoothly.
+</Tip>
+
+## Card item structure
+
+The actual card content is built by the `_buildCardItem` method:
+
+```dart
+Widget _buildCardItem(
+  BuildContext context,
+  int item,
+  TextStyle? textStyle,
+  double scale,
+) {
+  return SizedBox(
+    width: _itemWidth,
+    child: Card(
+      color: Colors.primaries[item % Colors.primaries.length],
+      child: Center(child: Text('Item $item', style: textStyle)),
+    ),
+  );
+}
+```
+
+### Method parameters
+
+<ParamField path="context" type="BuildContext">
+  The build context (currently unused but available for future enhancements)
+</ParamField>
+
+<ParamField path="item" type="int">
+  The item number/ID to display
+</ParamField>
+
+<ParamField path="textStyle" type="TextStyle?">
+  The text style from the theme (typically `headlineMedium`)
+</ParamField>
+
+<ParamField path="scale" type="double">
+  The current scale factor (currently unused but available for conditional rendering)
+</ParamField>
+
+## Color scheme
+
+Each card gets a unique color from Flutter's material color palette:
+
+```dart
+color: Colors.primaries[item % Colors.primaries.length]
+```
+
+### Color cycling
+
+The modulo operator (`%`) cycles through the primary colors:
+
+- `Colors.primaries` contains 18 material colors
+- Item 0 → red, Item 1 → pink, Item 2 → purple, etc.
+- After Item 17, the pattern repeats
+
+<Info>
+Flutter's `Colors.primaries` array includes: red, pink, purple, deepPurple, indigo, blue, lightBlue, cyan, teal, green, lightGreen, lime, yellow, amber, orange, deepOrange, brown, and blueGrey.
+</Info>
+
+## Interactive behavior
+
+Each carousel item is wrapped in a `GestureDetector` for tap interactions:
+
+```dart
+GestureDetector(
+  onTap: () => _selectItem(index),
+  child: AnimatedScale(
+    // ...
+  ),
+)
+```
+
+### Tap behavior
+
+When a user taps any item:
+1. The `_selectItem(index)` method is called
+2. `_selectedIndex` updates to the tapped item's index
+3. All items re-animate to their new positions and scales
+4. The tapped item moves to center and scales to full size
+
+## Widget hierarchy
+
+The complete structure of a carousel item:
+
+```
+AnimatedPositioned
+└── GestureDetector
+    └── AnimatedScale
+        └── SizedBox (width: 150.0)
+            └── Card
+                └── Center
+                    └── Text
+```
+
+<Warning>
+The `SizedBox` with `_itemWidth` (150.0) is crucial for maintaining consistent item dimensions. Without it, cards could have unpredictable sizes.
+</Warning>
+
+## Animation timing
+
+All animations use the same duration and curve for cohesive motion:
+
+```dart
+duration: _animationDuration,  // 300 milliseconds
+curve: Curves.easeInOut,
+```
+
+<Accordion title="Why 300ms?">
+  300 milliseconds provides a balance between snappy responsiveness and smooth, visible animation. It's long enough to perceive the motion but short enough to feel immediate.
+</Accordion>
+
+## Customization considerations
+
+While the current implementation uses simple numbered cards, you can customize `_buildCardItem` to display:
+
+- Profile images
+- Complex card layouts
+- Different content types
+- Conditional styling based on scale
+
+The structure supports any widget as long as it respects the `_itemWidth` constraint.

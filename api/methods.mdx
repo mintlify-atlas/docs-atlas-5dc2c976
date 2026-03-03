@@ -1,0 +1,510 @@
+---
+title: Methods API
+description: Public and private methods available in the SliceAnimatedList state class
+---
+
+## Overview
+
+The `_SliceAnimatedListState` class provides methods for initialization, user interaction, and widget building. All methods are private (prefixed with `_`) following Flutter conventions for state class implementation details.
+
+## Lifecycle methods
+
+### _populateInitialItems
+
+Populates the carousel with initial items during initialization.
+
+```dart
+void _populateInitialItems()
+```
+
+**Description**
+
+Creates 5 initial items in the carousel, each assigned a unique identifier from the `_counter`. This method is called during `initState()` to set up the default carousel state.
+
+**Implementation**
+
+```dart
+/// Populates initial items in the carousel
+void _populateInitialItems() {
+  for (int i = 0; i < 5; i++) {
+    _items.add(_counter++);
+  }
+}
+```
+
+**Side effects**
+
+- Adds 5 items to `_items` list
+- Increments `_counter` from 0 to 5
+
+<Note>
+This method creates items with IDs 0-4. The `_counter` will be at 5 after execution, ready for any future item additions.
+</Note>
+
+---
+
+### _initializeButtonAnimation
+
+Initializes the animation controller and animation for navigation button pulse effects.
+
+```dart
+void _initializeButtonAnimation()
+```
+
+**Description**
+
+Sets up a repeating animation that continuously scales the navigation buttons between 1.0x and 1.3x size with an easeInOut curve. The animation reverses automatically to create a pulsing effect.
+
+**Implementation**
+
+```dart
+/// Initializes the animation for the navigation buttons
+void _initializeButtonAnimation() {
+  _buttonAnimationController = AnimationController(
+    vsync: this,
+    duration: _buttonPulseDuration,
+  )..repeat(reverse: true);
+
+  _buttonAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
+    CurvedAnimation(
+      parent: _buttonAnimationController,
+      curve: Curves.easeInOut,
+    ),
+  );
+}
+```
+
+**Side effects**
+
+- Creates `_buttonAnimationController` with 1500ms duration
+- Starts repeating animation immediately
+- Initializes `_buttonAnimation` with scale tween
+
+<Tip>
+The `TickerProviderStateMixin` is required for the `vsync` parameter, which ensures animations pause when the widget is not visible.
+</Tip>
+
+---
+
+## Selection and navigation methods
+
+### _selectItem
+
+Updates the selected item index and triggers re-rendering with animations.
+
+```dart
+void _selectItem(int index)
+```
+
+<ParamField path="index" type="int" required>
+  The index of the item to select in the `_items` list
+</ParamField>
+
+**Description**
+
+Sets the `_selectedIndex` to the specified index and calls `setState()` to trigger a rebuild. This causes all carousel items to animate to their new positions and scales relative to the new selection.
+
+**Implementation**
+
+```dart
+/// Updates the selected item index and triggers animation
+void _selectItem(int index) {
+  setState(() {
+    _selectedIndex = index;
+  });
+}
+```
+
+**Usage example**
+
+```dart
+// Select the third item (index 2)
+_selectItem(2);
+
+// Used internally when user taps an item
+GestureDetector(
+  onTap: () => _selectItem(index),
+  child: /* carousel item */,
+)
+```
+
+---
+
+### _selectPreviousItem
+
+Navigates to the previous item in the carousel if not at the beginning.
+
+```dart
+void _selectPreviousItem()
+```
+
+**Description**
+
+Decrements the selected index by 1 if `_selectedIndex > 0`. This method is called by the left navigation button.
+
+**Implementation**
+
+```dart
+/// Navigates to the previous item if not at the beginning
+void _selectPreviousItem() {
+  if (_selectedIndex > 0) {
+    _selectItem(_selectedIndex - 1);
+  }
+}
+```
+
+**Behavior**
+
+- Does nothing if already at index 0
+- Calls `_selectItem()` with decremented index otherwise
+
+<Expandable title="Usage in navigation button">
+
+```dart
+if (_selectedIndex > 0)
+  Positioned(
+    left: 20,
+    child: _buildNavigationButton(
+      icon: Icons.arrow_back_ios,
+      onPressed: _selectPreviousItem,
+      isLeft: true,
+    ),
+  ),
+```
+
+The button only renders when navigation is possible.
+
+</Expandable>
+
+---
+
+### _selectNextItem
+
+Navigates to the next item in the carousel if not at the end.
+
+```dart
+void _selectNextItem()
+```
+
+**Description**
+
+Increments the selected index by 1 if `_selectedIndex < _items.length - 1`. This method is called by the right navigation button.
+
+**Implementation**
+
+```dart
+/// Navigates to the next item if not at the end
+void _selectNextItem() {
+  if (_selectedIndex < _items.length - 1) {
+    _selectItem(_selectedIndex + 1);
+  }
+}
+```
+
+**Behavior**
+
+- Does nothing if already at the last item
+- Calls `_selectItem()` with incremented index otherwise
+
+---
+
+## Widget building methods
+
+### _buildCardItem
+
+Builds an individual card widget for a carousel item.
+
+```dart
+Widget _buildCardItem(
+  BuildContext context,
+  int item,
+  TextStyle? textStyle,
+  double scale,
+)
+```
+
+<ParamField path="context" type="BuildContext" required>
+  Build context for accessing theme and media query data
+</ParamField>
+
+<ParamField path="item" type="int" required>
+  The item identifier used for display text and color selection
+</ParamField>
+
+<ParamField path="textStyle" type="TextStyle?" required>
+  Text style to apply to the item label (typically `headlineMedium` from theme)
+</ParamField>
+
+<ParamField path="scale" type="double" required>
+  Current scale factor for the item (used for potential future enhancements)
+</ParamField>
+
+**Returns**: `Widget` - A `SizedBox` containing a colored `Card` with centered text
+
+**Description**
+
+Creates a card with a width of `_itemWidth` (150.0), a color from `Colors.primaries` based on the item value, and centered text displaying "Item {item}".
+
+**Implementation**
+
+```dart
+/// Builds an individual card item for the carousel
+/// Changed to private method to follow conventions
+Widget _buildCardItem(
+  BuildContext context,
+  int item,
+  TextStyle? textStyle,
+  double scale,
+) {
+  return SizedBox(
+    width: _itemWidth,
+    child: Card(
+      color: Colors.primaries[item % Colors.primaries.length],
+      child: Center(child: Text('Item $item', style: textStyle)),
+    ),
+  );
+}
+```
+
+**Color selection**
+
+```dart
+Colors.primaries[item % Colors.primaries.length]
+```
+
+Uses modulo to cycle through Flutter's built-in primary colors, ensuring each item gets a unique color.
+
+---
+
+### _calculateItemScale
+
+Calculates the scale factor for an item based on its distance from the selected item.
+
+```dart
+double _calculateItemScale(int index)
+```
+
+<ParamField path="index" type="int" required>
+  The index of the item to calculate scale for
+</ParamField>
+
+**Returns**: `double` - Scale value between `_minScale` (0.3) and `_maxScale` (1.0)
+
+**Description**
+
+Computes scale by subtracting `(distance * _scaleFactor)` from `_maxScale`, then clamps the result to stay within min/max bounds.
+
+**Implementation**
+
+```dart
+/// Calculates the scale for an item based on its distance from the selected item
+double _calculateItemScale(int index) {
+  final int distanceFromCenter = (index - _selectedIndex).abs();
+  return (_maxScale - (distanceFromCenter * _scaleFactor)).clamp(
+    _minScale,
+    _maxScale,
+  );
+}
+```
+
+**Scale formula**
+
+```
+scale = max(min(1.0 - (distance * 0.2), 1.0), 0.3)
+```
+
+<Expandable title="Example calculations">
+
+Assuming `_selectedIndex = 2`:
+
+| Index | Distance | Calculation | Raw result | Clamped scale |
+|-------|----------|-------------|------------|---------------|
+| 2 | 0 | 1.0 - (0 * 0.2) | 1.0 | 1.0 |
+| 1 or 3 | 1 | 1.0 - (1 * 0.2) | 0.8 | 0.8 |
+| 0 or 4 | 2 | 1.0 - (2 * 0.2) | 0.6 | 0.6 |
+| -1 or 5 | 3 | 1.0 - (3 * 0.2) | 0.4 | 0.4 |
+| -2 or 6 | 4 | 1.0 - (4 * 0.2) | 0.2 | 0.3 (clamped) |
+
+</Expandable>
+
+---
+
+### _buildCarouselItem
+
+Builds a complete carousel item with position and scale animations.
+
+```dart
+Widget _buildCarouselItem(BuildContext context, int index)
+```
+
+<ParamField path="context" type="BuildContext" required>
+  Build context for accessing theme, media query, and building child widgets
+</ParamField>
+
+<ParamField path="index" type="int" required>
+  The index of the item in the `_items` list to build
+</ParamField>
+
+**Returns**: `Widget` - An `AnimatedPositioned` widget containing the scaled and interactive carousel item
+
+**Description**
+
+Combines position calculation, scale calculation, and tap handling into a single animated widget. The item animates smoothly when selection changes.
+
+**Implementation**
+
+```dart
+/// Builds a carousel item with position and scale animations
+Widget _buildCarouselItem(BuildContext context, int index) {
+  final double scale = _calculateItemScale(index);
+  final double offsetX = (index - _selectedIndex) * _itemSpacing;
+
+  TextStyle? textStyle = Theme.of(context).textTheme.headlineMedium;
+  int item = _items[index];
+
+  return AnimatedPositioned(
+    duration: _animationDuration,
+    curve: Curves.easeInOut,
+    left: MediaQuery.of(context).size.width / 2 - _itemWidth / 2 + offsetX,
+    child: GestureDetector(
+      onTap: () => _selectItem(index),
+      child: AnimatedScale(
+        scale: scale,
+        duration: _animationDuration,
+        curve: Curves.easeInOut,
+        child: _buildCardItem(context, item, textStyle, scale),
+      ),
+    ),
+  );
+}
+```
+
+**Position calculation**
+
+```dart
+left: MediaQuery.of(context).size.width / 2 - _itemWidth / 2 + offsetX
+```
+
+Centers the selected item by:
+1. Starting at screen center: `width / 2`
+2. Adjusting for item width: `- _itemWidth / 2`
+3. Adding offset based on distance: `+ offsetX`
+
+<Tip>
+The method uses both `AnimatedPositioned` and `AnimatedScale` to smoothly transition between states over 300ms with easeInOut curves.
+</Tip>
+
+---
+
+### _buildNavigationButton
+
+Builds a navigation button with pulse animation effect.
+
+```dart
+Widget _buildNavigationButton({
+  required IconData icon,
+  required VoidCallback onPressed,
+  required bool isLeft,
+})
+```
+
+<ParamField path="icon" type="IconData" required>
+  The icon to display in the button (e.g., `Icons.arrow_back_ios` or `Icons.arrow_forward_ios`)
+</ParamField>
+
+<ParamField path="onPressed" type="VoidCallback" required>
+  Callback function to execute when the button is pressed (e.g., `_selectPreviousItem` or `_selectNextItem`)
+</ParamField>
+
+<ParamField path="isLeft" type="bool" required>
+  Whether this is the left navigation button (currently used for identification, no functional difference)
+</ParamField>
+
+**Returns**: `Widget` - An `AnimatedBuilder` wrapping a scaled circular button
+
+**Description**
+
+Creates a circular button with a black semi-transparent background that continuously pulses between 1.0x and 1.3x scale. Uses `AnimatedBuilder` to rebuild on every animation frame.
+
+**Implementation**
+
+```dart
+/// Builds a navigation button with pulse animation
+Widget _buildNavigationButton({
+  required IconData icon,
+  required VoidCallback onPressed,
+  required bool isLeft,
+}) {
+  return AnimatedBuilder(
+    animation: _buttonAnimationController,
+    builder: (context, child) {
+      return Transform.scale(
+        scale: _buttonAnimation.value,
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.black54,
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: Icon(icon, color: Colors.white),
+            onPressed: onPressed,
+            iconSize: 30,
+          ),
+        ),
+      );
+    },
+  );
+}
+```
+
+**Usage example**
+
+```dart
+// Left navigation button
+_buildNavigationButton(
+  icon: Icons.arrow_back_ios,
+  onPressed: _selectPreviousItem,
+  isLeft: true,
+)
+
+// Right navigation button
+_buildNavigationButton(
+  icon: Icons.arrow_forward_ios,
+  onPressed: _selectNextItem,
+  isLeft: false,
+)
+```
+
+<Note>
+The button only appears when navigation is possible. The build method conditionally renders buttons based on `_selectedIndex` position.
+</Note>
+
+---
+
+## Lifecycle overrides
+
+### dispose
+
+Cleans up resources when the widget is removed from the tree.
+
+```dart
+@override
+void dispose() {
+  _buttonAnimationController.dispose();
+  super.dispose();
+}
+```
+
+**Description**
+
+Disposes the animation controller to prevent memory leaks. Always called automatically by the Flutter framework when the widget is permanently removed.
+
+<Tip>
+Always dispose animation controllers in the `dispose()` method to avoid memory leaks and ensure smooth app performance.
+</Tip>
+
+---
+
+## Source reference
+
+All methods extracted from `lib/main.dart:50-249` in the `_SliceAnimatedListState` class.

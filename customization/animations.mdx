@@ -1,0 +1,348 @@
+---
+title: Animation customization
+description: Customize animation timing, curves, and effects in the Animated Profile Slider
+---
+
+The Animated Profile Slider features smooth animations for item transitions and button effects. This guide explains how to customize animation behavior.
+
+## Animation duration constants
+
+The widget uses two primary duration constants:
+
+### Item transition duration
+
+Controls how fast items move and scale when navigating:
+
+```dart main.dart:58
+static const Duration _animationDuration = Duration(milliseconds: 300);
+```
+
+<ParamField path="_animationDuration" type="Duration" default="Duration(milliseconds: 300)">
+  Duration for item position and scale transitions. Shorter values create snappier animations, while longer values create smoother, more gradual transitions.
+</ParamField>
+
+### Button pulse duration
+
+Controls the pulsing animation speed for navigation buttons:
+
+```dart main.dart:59
+static const Duration _buttonPulseDuration = Duration(milliseconds: 1500);
+```
+
+<ParamField path="_buttonPulseDuration" type="Duration" default="Duration(milliseconds: 1500)">
+  Duration for the button pulse cycle. This controls how fast the navigation buttons grow and shrink to attract attention.
+</ParamField>
+
+<Info>
+Both durations can be adjusted to match your app's animation style. Consider using consistent durations across your app for a cohesive feel.
+</Info>
+
+## Curve options
+
+The widget uses `Curves.easeInOut` for smooth, natural-feeling animations:
+
+```dart main.dart:97,165,172
+curve: Curves.easeInOut
+```
+
+### Available curve types
+
+Flutter provides many curve options. Here are common alternatives:
+
+<Tabs>
+  <Tab title="Ease curves">
+    ```dart
+    Curves.easeInOut  // Current default - smooth start and end
+    Curves.easeIn     // Slow start, fast end
+    Curves.easeOut    // Fast start, slow end
+    Curves.ease       // Subtle ease in and out
+    ```
+  </Tab>
+  
+  <Tab title="Elastic curves">
+    ```dart
+    Curves.elasticOut    // Bouncy end
+    Curves.elasticIn     // Bouncy start
+    Curves.elasticInOut  // Bouncy start and end
+    ```
+  </Tab>
+  
+  <Tab title="Bounce curves">
+    ```dart
+    Curves.bounceOut    // Bounce at the end
+    Curves.bounceIn     // Bounce at the start
+    Curves.bounceInOut  // Bounce at both ends
+    ```
+  </Tab>
+  
+  <Tab title="Fast curves">
+    ```dart
+    Curves.fastOutSlowIn  // Material Design standard
+    Curves.linear         // No easing, constant speed
+    Curves.decelerate     // Fast to slow
+    ```
+  </Tab>
+</Tabs>
+
+### Changing animation curves
+
+To use a different curve, update the `curve` property in the animation widgets:
+
+**For item transitions:**
+
+```dart main.dart:163-176
+AnimatedPositioned(
+  duration: _animationDuration,
+  curve: Curves.fastOutSlowIn,  // Changed from easeInOut
+  left: MediaQuery.of(context).size.width / 2 - _itemWidth / 2 + offsetX,
+  child: GestureDetector(
+    onTap: () => _selectItem(index),
+    child: AnimatedScale(
+      scale: scale,
+      duration: _animationDuration,
+      curve: Curves.fastOutSlowIn,  // Match the position curve
+      child: _buildCardItem(context, item, textStyle, scale),
+    ),
+  ),
+)
+```
+
+<Warning>
+For best results, use the same curve for both `AnimatedPositioned` and `AnimatedScale` to keep position and scale changes synchronized.
+</Warning>
+
+## AnimationController setup
+
+The button pulse effect uses an `AnimationController` with continuous repeating animation:
+
+```dart main.dart:88-100
+void _initializeButtonAnimation() {
+  _buttonAnimationController = AnimationController(
+    vsync: this,
+    duration: _buttonPulseDuration,
+  )..repeat(reverse: true);
+
+  _buttonAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
+    CurvedAnimation(
+      parent: _buttonAnimationController,
+      curve: Curves.easeInOut,
+    ),
+  );
+}
+```
+
+<ParamField path="vsync" type="TickerProvider" required>
+  Provides the ticker for the animation. The widget uses `TickerProviderStateMixin` to provide this.
+</ParamField>
+
+<ParamField path="repeat(reverse: true)" type="method">
+  Makes the animation loop continuously, reversing direction each time. This creates the pulsing effect.
+</ParamField>
+
+<Note>
+Don't forget to dispose the controller when the widget is disposed:
+
+```dart main.dart:102-106
+@override
+void dispose() {
+  _buttonAnimationController.dispose();
+  super.dispose();
+}
+```
+</Note>
+
+## Scale animations
+
+The button pulse uses a `Tween` to animate between scale values:
+
+```dart main.dart:94-99
+_buttonAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
+  CurvedAnimation(
+    parent: _buttonAnimationController,
+    curve: Curves.easeInOut,
+  ),
+);
+```
+
+### Customizing the pulse effect
+
+<Tabs>
+  <Tab title="Pulse intensity">
+    Adjust the `end` value in the Tween to control how much the button grows:
+    
+    ```dart
+    _buttonAnimation = Tween<double>(begin: 1.0, end: 1.5).animate(...)  // Larger pulse
+    _buttonAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(...)  // Subtle pulse
+    ```
+  </Tab>
+  
+  <Tab title="Pulse speed">
+    Change the `_buttonPulseDuration` constant:
+    
+    ```dart
+    static const Duration _buttonPulseDuration = Duration(milliseconds: 1000);  // Faster
+    static const Duration _buttonPulseDuration = Duration(milliseconds: 2500);  // Slower
+    ```
+  </Tab>
+  
+  <Tab title="Pulse curve">
+    Use a different curve for unique effects:
+    
+    ```dart
+    CurvedAnimation(
+      parent: _buttonAnimationController,
+      curve: Curves.elasticOut,  // Bouncy effect
+    )
+    ```
+  </Tab>
+  
+  <Tab title="Disable pulse">
+    To disable the pulse animation, remove the repeat:
+    
+    ```dart
+    _buttonAnimationController = AnimationController(
+      vsync: this,
+      duration: _buttonPulseDuration,
+      value: 1.0,  // Set to constant value
+    );
+    // Don't call repeat()
+    ```
+  </Tab>
+</Tabs>
+
+### Button animation implementation
+
+The animation is applied using `AnimatedBuilder` and `Transform.scale`:
+
+```dart main.dart:185-203
+AnimatedBuilder(
+  animation: _buttonAnimationController,
+  builder: (context, child) {
+    return Transform.scale(
+      scale: _buttonAnimation.value,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.black54,
+          shape: BoxShape.circle,
+        ),
+        child: IconButton(
+          icon: Icon(icon, color: Colors.white),
+          onPressed: onPressed,
+          iconSize: 30,
+        ),
+      ),
+    );
+  },
+)
+```
+
+<Info>
+`AnimatedBuilder` efficiently rebuilds only the necessary parts of the widget tree when the animation value changes.
+</Info>
+
+## Item scale animations
+
+Items use `AnimatedScale` for smooth scale transitions:
+
+```dart main.dart:169-175
+AnimatedScale(
+  scale: scale,
+  duration: _animationDuration,
+  curve: Curves.easeInOut,
+  child: _buildCardItem(context, item, textStyle, scale),
+)
+```
+
+The scale value is calculated based on distance from the selected item:
+
+```dart main.dart:147-153
+double _calculateItemScale(int index) {
+  final int distanceFromCenter = (index - _selectedIndex).abs();
+  return (_maxScale - (distanceFromCenter * _scaleFactor)).clamp(
+    _minScale,
+    _maxScale,
+  );
+}
+```
+
+<Tip>
+See the [Layout customization](/customization/layout) guide to learn how to adjust the scale calculation constants.
+</Tip>
+
+## Modifying animation timing and curves
+
+Here's a complete example with custom animation settings:
+
+```dart
+class _SliceAnimatedListState extends State<SliceAnimatedList>
+    with TickerProviderStateMixin {
+  // Faster, snappier animations
+  static const Duration _animationDuration = Duration(milliseconds: 200);
+  
+  // Slower, more noticeable pulse
+  static const Duration _buttonPulseDuration = Duration(milliseconds: 2000);
+  
+  // ... rest of the class
+  
+  void _initializeButtonAnimation() {
+    _buttonAnimationController = AnimationController(
+      vsync: this,
+      duration: _buttonPulseDuration,
+    )..repeat(reverse: true);
+
+    // Larger pulse with elastic curve
+    _buttonAnimation = Tween<double>(begin: 1.0, end: 1.5).animate(
+      CurvedAnimation(
+        parent: _buttonAnimationController,
+        curve: Curves.elasticOut,
+      ),
+    );
+  }
+  
+  Widget _buildCarouselItem(BuildContext context, int index) {
+    final double scale = _calculateItemScale(index);
+    final double offsetX = (index - _selectedIndex) * _itemSpacing;
+    TextStyle? textStyle = Theme.of(context).textTheme.headlineMedium;
+    int item = _items[index];
+
+    return AnimatedPositioned(
+      duration: _animationDuration,
+      curve: Curves.fastOutSlowIn,  // Material Design standard curve
+      left: MediaQuery.of(context).size.width / 2 - _itemWidth / 2 + offsetX,
+      child: GestureDetector(
+        onTap: () => _selectItem(index),
+        child: AnimatedScale(
+          scale: scale,
+          duration: _animationDuration,
+          curve: Curves.fastOutSlowIn,  // Match position curve
+          child: _buildCardItem(context, item, textStyle, scale),
+        ),
+      ),
+    );
+  }
+}
+```
+
+<Warning>
+When using very short animation durations (< 200ms), ensure your device can maintain smooth framerates. Test on lower-end devices.
+</Warning>
+
+## Performance considerations
+
+- **Duration impact**: Shorter durations require faster rendering. Keep durations above 150ms for best compatibility.
+- **Curve complexity**: Complex curves like `elasticOut` require more calculations. Use simpler curves for better performance on lower-end devices.
+- **Animation count**: The widget animates multiple items simultaneously. If you increase the item count significantly, consider optimizing by animating only visible items.
+
+<Tip>
+Use Flutter's DevTools performance overlay to monitor animation performance:
+
+```dart
+import 'package:flutter/rendering.dart';
+
+void main() {
+  debugPaintSizeEnabled = false;
+  debugPaintLayerBordersEnabled = false;
+  // ... rest of main
+}
+```
+</Tip>

@@ -1,0 +1,145 @@
+---
+title: SliceAnimatedList widget
+description: Main animated carousel component that displays items in a horizontal row with the selected item centered and scaled up
+---
+
+## Overview
+
+`SliceAnimatedList` is the core widget of the Animated Profile Slider package. It creates a horizontal carousel with smooth animations where items scale based on their distance from the selected item.
+
+## Widget signature
+
+```dart
+class SliceAnimatedList extends StatefulWidget {
+  const SliceAnimatedList({super.key});
+
+  @override
+  _SliceAnimatedListState createState() => _SliceAnimatedListState();
+}
+```
+
+## Class hierarchy
+
+- **StatefulWidget** (extends)
+  - **SliceAnimatedList**
+    - State: `_SliceAnimatedListState` with `TickerProviderStateMixin`
+
+<Note>
+The widget uses `StatefulWidget` to manage carousel state and animations. The state class includes `TickerProviderStateMixin` to provide animation controllers for smooth transitions.
+</Note>
+
+## State class
+
+The `_SliceAnimatedListState` class manages:
+
+- **Animation controllers** - For item transitions and button pulse effects
+- **Item management** - List of carousel items and selection tracking
+- **Layout calculations** - Dynamic positioning and scaling of items
+- **User interaction** - Tap selection and navigation button handlers
+
+```dart
+class _SliceAnimatedListState extends State<SliceAnimatedList>
+    with TickerProviderStateMixin {
+  // State management and animation logic
+}
+```
+
+## Key features
+
+- **Scale-based selection** - Selected item scales to full size (1.0) while others scale down
+- **Smooth animations** - 300ms transitions with easeInOut curves
+- **Interactive navigation** - Tap to select items or use arrow buttons
+- **Pulsing navigation buttons** - 1.5s pulse animation to draw attention
+- **Dynamic positioning** - Items automatically position relative to center
+
+## Public API
+
+The widget provides a simple public API with no required parameters:
+
+<ParamField path="key" type="Key?" default="null">
+  Optional key for widget identification in the widget tree
+</ParamField>
+
+## Usage example
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:animated_profile_slider/main.dart';
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Animated Profile Slider',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        brightness: Brightness.dark,
+      ),
+      home: const Scaffold(
+        body: SliceAnimatedList(),
+      ),
+    );
+  }
+}
+```
+
+## Lifecycle
+
+<Expandable title="Initialization sequence">
+
+1. **Constructor** - Creates immutable widget instance
+2. **createState()** - Instantiates `_SliceAnimatedListState`
+3. **initState()** - Populates initial items and initializes button animation
+4. **build()** - Renders the carousel with animated items
+5. **dispose()** - Cleans up animation controllers
+
+```dart
+@override
+void initState() {
+  super.initState();
+  // Initialize the carousel with 5 items
+  _populateInitialItems();
+  
+  // Setup button animation controller for pulsing effect
+  _initializeButtonAnimation();
+}
+```
+
+</Expandable>
+
+<Expandable title="Animation lifecycle">
+
+The widget uses two main animation systems:
+
+1. **Item animations** - Handled by `AnimatedPositioned` and `AnimatedScale` widgets with 300ms duration
+2. **Button pulse** - Continuous repeating animation controlled by `_buttonAnimationController`
+
+```dart
+_buttonAnimationController = AnimationController(
+  vsync: this,
+  duration: _buttonPulseDuration,
+)..repeat(reverse: true);
+```
+
+</Expandable>
+
+## Source reference
+
+Extracted from `lib/main.dart:43-48`:
+
+```dart
+/// Main animated carousel component that displays items in a horizontal row
+/// with the selected item centered and scaled up.
+class SliceAnimatedList extends StatefulWidget {
+  const SliceAnimatedList({super.key});
+
+  @override
+  _SliceAnimatedListState createState() => _SliceAnimatedListState();
+}
+```
+
+<Tip>
+For best results, use the widget in landscape orientation. The example app sets preferred orientations to `landscapeLeft` and `landscapeRight` for optimal carousel display.
+</Tip>
