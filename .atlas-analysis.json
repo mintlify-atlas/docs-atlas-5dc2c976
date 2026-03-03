@@ -1,0 +1,57 @@
+{
+  "projectType": "frontend",
+  "projectName": "Animated Profile Slider",
+  "projectDescription": "A Flutter carousel widget with smooth animations and scale-based item selection.",
+  "theme": "palm",
+  "primaryColor": "#2196F3",
+  "lightColor": "#64B5F6",
+  "darkColor": "#1976D2",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get Started",
+        "pages": [
+          "introduction",
+          "installation",
+          "quickstart"
+        ]
+      },
+      {
+        "group": "Components",
+        "pages": [
+          "components/animated-slider",
+          "components/carousel-item",
+          "components/navigation-buttons"
+        ]
+      },
+      {
+        "group": "Customization",
+        "pages": [
+          "customization/styling",
+          "customization/animations",
+          "customization/layout"
+        ]
+      },
+      {
+        "group": "API Reference",
+        "pages": [
+          "api/slice-animated-list",
+          "api/properties",
+          "api/methods"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Horizontal carousel with smooth animations",
+    "Scale-based item selection",
+    "Gesture and button navigation",
+    "Customizable animation timing",
+    "Pulsing navigation buttons"
+  ],
+  "publicApiSurface": [
+    "SliceAnimatedList",
+    "SimpleAnimatedList",
+    "MyApp"
+  ]
+}
